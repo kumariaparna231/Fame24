@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fame24 - Be Famous for a Day</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <header>
+  <div class="logo">Fame24</div>
+  <div class="tagline">Be Famous for a Day ✨</div>
+
+  <div id="userBar" class="user-bar hidden">
+    <span id="loggedUserText"></span>
+    <button onclick="logoutUser()">Logout</button>
+  </div>
+</header>
+
+  <main class="container">
+    <section id="loginPage">
+  <div class="card login-card">
+    <h3>Login to Fame24</h3>
+    <p class="login-text">Enter your username to start posting, voting and commenting.</p>
+
+    <input id="loginNameInput" type="text" placeholder="Choose username e.g. aparna" />
+
+    <button class="primary-btn" onclick="loginUser()">Login</button>
+  </div>
+</section>
+<section id="homePage" class="hidden">
+
+
+<div class="hero">
+        <h2>Today’s Spotlight is Open</h2>
+        <p>Followers nahi chahiye. Post karo, votes lo, aur 24 hours ke liye spotlight me aao.</p>
+
+        <div class="spotlight">
+          <div class="spotlight-title">🏆 Current Spotlight</div>
+          <div id="spotlightBox">Abhi koi winner nahi. First post daalo!</div>
+        </div>
+      </div>
+
+      <div class="section-title">🔥 Leaderboard</div>
+      <div id="leaderboardBox"></div>
+    </section>
+
+    <section id="createPage" class="hidden">
+      <div class="card">
+        <h3>Create Your Fame24 Post</h3>
+        <select id="categoryInput">
+          <option value="">Select category</option>
+          <option>Main Character</option>
+          <option>Funny Moment</option>
+          <option>Talent</option>
+          <option>College Life</option>
+          <option>Meme Battle</option>
+          <option>Most Relatable</option>
+        </select>
+
+        <textarea id="captionInput" placeholder="Write your post..."></textarea>
+        <input id="imageInput" type="file" accept="image/*" />
+        <div class="small-note">Tip: Short, funny, relatable posts get more votes.</div>
+
+        <button class="primary-btn" onclick="createPost()">Post Now</button>
+      </div>
+    </section>
+
+    <section id="feedPage" class="hidden">
+      <div class="challenge-card">
+  <p class="challenge-label">🔥 Today’s Fame Challenge</p>
+  <h2>Main Character Moment</h2>
+  <p>Apni best photo post karo, votes lo, aur 24 hours spotlight jeeto 👑</p>
+  <div class="challenge-bottom">
+    <span>⏳ Ends in 24 hours</span>
+    <span>🏆 Top post wins Fame Crown</span>
+  </div>
+</div>
+  <div class="section-title">Public Feed</div>
+  <div class="stats-box">
+  <div class="stat-card">
+    <h3 id="totalPosts">0</h3>
+    <p>Posts</p>
+  </div>
+
+  <div class="stat-card">
+    <h3 id="totalVotes">0</h3>
+    <p>Votes</p>
+  </div>
+
+  <div class="stat-card">
+    <h3 id="totalCreators">0</h3>
+    <p>Creators</p>
+  </div>
+
+  <div class="stat-card">
+    <h3 id="totalComments">0</h3>
+    <p>Comments</p>
+  </div>
+</div>
+
+  <div class="filter-box">
+    <button class="filter-btn active-filter" onclick="filterPosts('All', this)">All</button>
+    <button class="filter-btn" onclick="filterPosts('Main Character', this)">Main Character</button>
+    <button class="filter-btn" onclick="filterPosts('Funny Moment', this)">Funny Moment</button>
+    <button class="filter-btn" onclick="filterPosts('Talent', this)">Talent</button>
+    <button class="filter-btn" onclick="filterPosts('College Life', this)">College Life</button>
+    <button class="filter-btn" onclick="filterPosts('Meme Battle', this)">Meme Battle</button>
+    <button class="filter-btn" onclick="filterPosts('Most Relatable', this)">Most Relatable</button>
+  </div>
+
+  <div id="feedBox"></div>
+</section>
+<section id="battlePage" class="hidden">
+
+  <div class="battle-header">
+    <p>🔥 Blind Fame Battle</p>
+    <h2>Who deserves the spotlight?</h2>
+    <span>Vote without seeing names or follower count.</span>
+  </div>
+
+  <div class="battle-box">
+
+    <div class="battle-post">
+      <div class="battle-tag">POST A</div>
+
+      <img
+        src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee"
+        alt="Battle Post A"
+      />
+
+      <button class="battle-vote-btn">
+        🔥 Vote A
+      </button>
+    </div>
+
+    <div class="vs-circle">VS</div>
+
+    <div class="battle-post">
+      <div class="battle-tag">POST B</div>
+
+      <img
+        src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f"
+        alt="Battle Post B"
+      />
+
+      <button class="battle-vote-btn">
+        🔥 Vote B
+      </button>
+    </div>
+
+  </div>
+
+  <div class="battle-timer">
+    ⏳ Battle ends in 12h 42m
+  </div>
+  <button class="result-btn" onclick="showBattleResult()">
+  👑 Reveal Winner
+</button>
+<div id="battleResult" class="battle-result"></div>
+
+
+</section>
+<section id="profilePage" class="hidden">
+  <div class="section-title">My Profile</div>
+
+  <div class="card">
+    <h3>Search Your Fame24 Profile</h3>
+
+    <input id="profileNameInput" type="text" placeholder="Enter your nickname e.g. aparna" />
+
+    <button class="primary-btn" onclick="searchProfile()">View Profile</button>
+  </div>
+
+  <div id="profileBox"></div>
+</section>
+<section id="peoplePage" class="hidden">
+  <div class="section-title">People</div>
+  <div id="peopleBox"></div>
+</section>
+  </main>
+
+   <nav id="bottomNav" class="hidden">
+  <button id="homeBtn" class="active" onclick="showPage('home')">🏠 Home</button>
+  <button id="createBtn" onclick="showPage('create')">➕ Post</button>
+  <button id="feedBtn" onclick="showPage('feed')">🔥 Feed</button>
+  <button id="peopleBtn" onclick="showPage('people')">👥 People</button>
+  <button id="profileBtn" onclick="showPage('profile')">👤 Profile</button>
+</nav>
+<div id="contributionModal" class="contribution-modal hidden">
+  <div class="contribution-panel">
+    <h3>✨ Add to this Moment</h3>
+
+    <textarea
+      id="contributionText"
+      placeholder="Write your memory, thought, or contribution..."
+    ></textarea>
+    <input
+  id="contributionImage"
+  type="file"
+  accept="image/*"
+/>
+
+    <div class="contribution-actions">
+      <button onclick="closeContributionModal()">Cancel</button>
+      <button onclick="saveContribution()">Add Moment</button>
+    </div>
+  </div>
+</div>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script src="firebase-config.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
