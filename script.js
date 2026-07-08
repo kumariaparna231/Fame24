@@ -156,6 +156,10 @@ function createPost() {
     alert("Category aur post text fill karo.");
     return;
   }
+  const postBtn = document.getElementById("postBtn");
+
+postBtn.disabled = true;
+postBtn.innerText = "Posting...";
   function saveNewPost(imageData) {
     const newPost = {
       id: Date.now(),
@@ -176,16 +180,26 @@ function createPost() {
     };
 
     db.collection("posts")
-      .add(newPost)
-      .then(() => {
-        clearForm();
-        showPage("feed");
-      })
-      .catch(error => {
-        console.error("Post save error:", error);
-        alert("Post Firebase me save nahi hua.");
-      });
-  }
+  .add(newPost)
+  .then(() => {
+    clearForm();
+
+    postBtn.disabled = false;
+    postBtn.innerText = "Post Now";
+
+    alert("✅ Post successfully published!");
+
+    showPage("feed");
+  })
+  .catch(error => {
+    console.error("Post save error:", error);
+
+    postBtn.disabled = false;
+    postBtn.innerText = "Post Now";
+
+    alert("Post Firebase me save nahi hua.");
+  });
+}
 
   if (imageFile) {
     const reader = new FileReader();
@@ -534,6 +548,76 @@ function getTimeLeft(postId) {
 
   return `${hours}h ${minutes}m left`;
 }
+function getTrendingStatus(post) {
+  const reactions = post.reactions || {};
+
+  const totalReactions =
+    (reactions.funny || 0) +
+    (reactions.fire || 0) +
+    (reactions.love || 0) +
+    (reactions.relatable || 0);
+
+  const totalComments = (post.comments || []).length;
+  const totalVotes = post.votes || 0;
+
+  const engagement =
+    totalVotes +
+    totalComments +
+    totalReactions;
+
+  if (engagement >= 6) {
+    return {
+      text: "🔥 Trending",
+      className: "trending"
+    };
+  }
+
+  if (engagement >= 3) {
+    return {
+      text: "⚡ Rising",
+      className: "rising"
+    };
+  }
+
+  return {
+    text: "🌱 New",
+    className: "new-post"
+  };
+}
+function openMysteryDrop() {
+  const resultBox = document.getElementById("mysteryDropResult");
+
+  if (!posts || posts.length === 0) {
+    resultBox.innerHTML = `
+      <div class="empty">
+        Mystery Drop ke liye abhi creators nahi hain.
+      </div>
+    `;
+    return;
+  }
+
+  const creators = [
+    ...new Set(posts.map(post => post.name))
+  ];
+
+  const randomIndex = Math.floor(
+    Math.random() * creators.length
+  );
+
+  const selectedCreator = creators[randomIndex];
+
+  resultBox.innerHTML = `
+    <div class="mystery-winner-card">
+      <div class="mystery-crown">👑</div>
+
+      <h2>@${selectedCreator}</h2>
+
+      <p>
+        Surprise! You received today's Mystery Spotlight Drop 🎉
+      </p>
+    </div>
+  `;
+}
 function renderFeed() {
   const feedBox = document.getElementById("feedBox");
   const filteredPosts = currentFilter === "All"
@@ -545,7 +629,11 @@ if (filteredPosts.length === 0) {
   return;
 }
 
-feedBox.innerHTML = filteredPosts.map(post => `
+feedBox.innerHTML = filteredPosts.map(post => {
+
+  const status = getTrendingStatus(post);
+
+  return `
     <div class="post-card">
       <div class="post-top">
         <div>
@@ -562,7 +650,9 @@ feedBox.innerHTML = filteredPosts.map(post => `
         </div>
         <div class="category">${post.category}</div>
       </div>
-
+<div class="trend-badge ${status.className}">
+  ${status.text}
+</div>
       ${post.image ? `<img src="${post.image}" class="post-image" alt="Post image">` : ""}
 
       <div class="caption">${post.caption}</div>
@@ -618,7 +708,8 @@ feedBox.innerHTML = filteredPosts.map(post => `
         </div>
       </div>
     </div>
-  `).join("");
+  `;
+}).join("");
 }
 
 function renderLeaderboard() {
@@ -638,6 +729,65 @@ function renderLeaderboard() {
     <div class="leader-item">
       <span>${index + 1}. @${post.name} — ${post.category}</span>
       <b>${post.votes} 🔥</b>
+    </div>
+  `).join("");
+}
+function renderRisingPosts() {
+  const risingBox = document.getElementById("risingBox");
+
+  if (!risingBox) return;
+
+  if (posts.length === 0) {
+    risingBox.innerHTML = `
+      <div class="empty">
+        Abhi koi rising post nahi hai.
+      </div>
+    `;
+    return;
+  }
+
+  const rankedPosts = posts
+    .map(post => {
+      const reactions = post.reactions || {};
+
+      const reactionCount =
+        (reactions.funny || 0) +
+        (reactions.fire || 0) +
+        (reactions.love || 0) +
+        (reactions.relatable || 0);
+
+      const commentCount =
+        (post.comments || []).length;
+
+      const score =
+        (post.votes || 0) +
+        commentCount +
+        reactionCount;
+
+      return {
+        ...post,
+        risingScore: score
+      };
+    })
+    .sort((a, b) => b.risingScore - a.risingScore)
+    .slice(0, 3);
+
+  risingBox.innerHTML = rankedPosts.map((post, index) => `
+    <div class="rising-card">
+
+      <div class="rising-rank">
+        ${index + 1}
+      </div>
+
+      <div class="rising-info">
+        <h3>@${post.name}</h3>
+        <p>${post.caption}</p>
+
+        <span>
+          ⚡ ${post.risingScore} engagement points
+        </span>
+      </div>
+
     </div>
   `).join("");
 }
@@ -819,8 +969,8 @@ function removeExpiredPosts() {
 function renderAll() {
   removeExpiredPosts();
   renderFeed();
- // renderBattle();
   renderLeaderboard();
+  renderRisingPosts();
   renderStats();
   renderSpotlightWinner();
   renderPeople();

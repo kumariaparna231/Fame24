@@ -44,6 +44,24 @@
 
       <div class="section-title">🔥 Leaderboard</div>
       <div id="leaderboardBox"></div>
+      <div class="section-title">⚡ Rising Fast</div>
+      <div id="risingBox"></div>
+      <div class="section-title">🎁 Mystery Spotlight Drop</div>
+
+<div class="mystery-drop-card">
+  <div class="mystery-icon">🎁</div>
+
+  <div>
+    <h3>Who gets the surprise spotlight?</h3>
+    <p>One active creator can receive a surprise Fame24 boost.</p>
+  </div>
+
+  <button class="primary-btn" onclick="openMysteryDrop()">
+    Reveal Drop
+  </button>
+</div>
+
+<div id="mysteryDropResult"></div>
     </section>
 
     <section id="createPage" class="hidden">
@@ -63,7 +81,7 @@
         <input id="imageInput" type="file" accept="image/*" />
         <div class="small-note">Tip: Short, funny, relatable posts get more votes.</div>
 
-        <button class="primary-btn" onclick="createPost()">Post Now</button>
+        <button id="postBtn" class="primary-btn" onclick="createPost()">Post Now</button>
       </div>
     </section>
 
@@ -211,7 +229,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-<script src="firebase-config.js"></script>
-<script src="script.js"></script>
+<script src="firebase-config.js?v=2"></script>
+<script src="script.js?v=2"></script>
 </body>
 </html>
