@@ -91,7 +91,7 @@
   <h2>Main Character Moment</h2>
   <p>Apni best photo post karo, votes lo, aur 24 hours spotlight jeeto 👑</p>
   <div class="challenge-bottom">
-    <span>⏳ Ends in 24 hours</span>
+    <span id="challengeTimer">⏳ Loading timer...</span>
     <span>🏆 Top post wins Fame Crown</span>
   </div>
 </div>
@@ -203,6 +203,12 @@
   <button id="homeBtn" class="active" onclick="showPage('home')">🏠 Home</button>
   <button id="createBtn" onclick="showPage('create')">➕ Post</button>
   <button id="feedBtn" onclick="showPage('feed')">🔥 Feed</button>
+  <button
+  id="battleBtn"
+  onclick="showPage('battle')"
+>
+  ⚔️ Battle
+</button>
   <button id="peopleBtn" onclick="showPage('people')">👥 People</button>
   <button id="profileBtn" onclick="showPage('profile')">👤 Profile</button>
 </nav>

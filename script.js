@@ -94,39 +94,100 @@ function logoutUser() {
 }
 
 function showPage(page) {
-    document.getElementById("homePage").classList.add("hidden");
-document.getElementById("createPage").classList.add("hidden");
-document.getElementById("feedPage").classList.add("hidden");
-document.getElementById("peoplePage").classList.add("hidden");
-document.getElementById("profilePage").classList.add("hidden");
+  const pages = [
+    "homePage",
+    "createPage",
+    "feedPage",
+    "peoplePage",
+    "profilePage",
+    "battlePage"
+  ];
 
-document.getElementById("homeBtn").classList.remove("active");
-document.getElementById("createBtn").classList.remove("active");
-document.getElementById("feedBtn").classList.remove("active");
-document.getElementById("peopleBtn").classList.remove("active");
-document.getElementById("profileBtn").classList.remove("active");
-  if (page === "profile") {
-  document.getElementById("profilePage").classList.remove("hidden");
-  document.getElementById("profileBtn").classList.add("active");
-}
-if (page === "people") {
-  document.getElementById("peoplePage").classList.remove("hidden");
-  document.getElementById("peopleBtn").classList.add("active");
-}
+  pages.forEach(pageId => {
+    const element = document.getElementById(pageId);
+
+    if (element) {
+      element.classList.add("hidden");
+    }
+  });
+
+  const buttons = [
+    "homeBtn",
+    "createBtn",
+    "feedBtn",
+    "peopleBtn",
+    "profileBtn",
+    "battleBtn"
+  ];
+
+  buttons.forEach(buttonId => {
+    const button = document.getElementById(buttonId);
+
+    if (button) {
+      button.classList.remove("active");
+    }
+  });
 
   if (page === "home") {
-    document.getElementById("homePage").classList.remove("hidden");
-    document.getElementById("homeBtn").classList.add("active");
+    document
+      .getElementById("homePage")
+      .classList.remove("hidden");
+
+    document
+      .getElementById("homeBtn")
+      .classList.add("active");
   }
 
   if (page === "create") {
-    document.getElementById("createPage").classList.remove("hidden");
-    document.getElementById("createBtn").classList.add("active");
+    document
+      .getElementById("createPage")
+      .classList.remove("hidden");
+
+    document
+      .getElementById("createBtn")
+      .classList.add("active");
   }
 
   if (page === "feed") {
-    document.getElementById("feedPage").classList.remove("hidden");
-    document.getElementById("feedBtn").classList.add("active");
+    document
+      .getElementById("feedPage")
+      .classList.remove("hidden");
+
+    document
+      .getElementById("feedBtn")
+      .classList.add("active");
+  }
+
+  if (page === "people") {
+    document
+      .getElementById("peoplePage")
+      .classList.remove("hidden");
+
+    document
+      .getElementById("peopleBtn")
+      .classList.add("active");
+  }
+
+  if (page === "profile") {
+    document
+      .getElementById("profilePage")
+      .classList.remove("hidden");
+
+    document
+      .getElementById("profileBtn")
+      .classList.add("active");
+  }
+
+  if (page === "battle") {
+    document
+      .getElementById("battlePage")
+      .classList.remove("hidden");
+
+    document
+      .getElementById("battleBtn")
+      ?.classList.add("active");
+
+    renderBattle();
   }
 
   renderAll();
@@ -548,7 +609,7 @@ function getTimeLeft(postId) {
 
   return `${hours}h ${minutes}m left`;
 }
-function getTrendingStatus(post) {
+function getPostRound(post) {
   const reactions = post.reactions || {};
 
   const totalReactions =
@@ -565,25 +626,41 @@ function getTrendingStatus(post) {
     totalComments +
     totalReactions;
 
-  if (engagement >= 6) {
+  if (engagement >= 50) {
     return {
-      text: "🔥 Trending",
-      className: "trending"
+      round: 4,
+      title: "🏆 SPOTLIGHT",
+      progress: 100,
+      message: "You made it to Spotlight!"
     };
   }
 
-  if (engagement >= 3) {
+  if (engagement >= 25) {
     return {
-      text: "⚡ Rising",
-      className: "rising"
+      round: 3,
+      title: "🚀 RISING",
+      progress: ((engagement - 25) / 25) * 100,
+      message: `${50 - engagement} more engagement to reach Spotlight`
+    };
+  }
+
+  if (engagement >= 10) {
+    return {
+      round: 2,
+      title: "🔥 ROUND 2",
+      progress: ((engagement - 10) / 15) * 100,
+      message: `${25 - engagement} more engagement to become Rising`
     };
   }
 
   return {
-    text: "🌱 New",
-    className: "new-post"
+    round: 1,
+    title: "👀 ROUND 1",
+    progress: (engagement / 10) * 100,
+    message: `${10 - engagement} more engagement to unlock Round 2`
   };
 }
+
 function openMysteryDrop() {
   const resultBox = document.getElementById("mysteryDropResult");
 
@@ -631,8 +708,7 @@ if (filteredPosts.length === 0) {
 
 feedBox.innerHTML = filteredPosts.map(post => {
 
-  const status = getTrendingStatus(post);
-
+const roundData = getPostRound(post);
   return `
     <div class="post-card">
       <div class="post-top">
@@ -650,8 +726,25 @@ feedBox.innerHTML = filteredPosts.map(post => {
         </div>
         <div class="category">${post.category}</div>
       </div>
-<div class="trend-badge ${status.className}">
-  ${status.text}
+
+<div class="round-system-card">
+
+  <div class="round-top">
+    <span>${roundData.title}</span>
+    <span>Level ${roundData.round}</span>
+  </div>
+
+  <div class="round-progress">
+    <div
+      class="round-progress-fill"
+      style="width: ${Math.min(roundData.progress, 100)}%"
+    ></div>
+  </div>
+
+  <p class="round-message">
+    ${roundData.message}
+  </p>
+
 </div>
       ${post.image ? `<img src="${post.image}" class="post-image" alt="Post image">` : ""}
 
@@ -1008,7 +1101,23 @@ function searchProfile() {
     return sum + r.funny + r.fire + r.love + r.relatable;
   }, 0);
 
-  const bestPost = [...userPosts].sort((a, b) => b.votes - a.votes)[0];
+  const bestPost = [...userPosts].sort((a, b) => {
+  const getEngagement = post => {
+    const r = post.reactions || {};
+
+    return (
+      (post.votes || 0) +
+      (post.comments || []).length +
+      (r.funny || 0) +
+      (r.fire || 0) +
+      (r.love || 0) +
+      (r.relatable || 0)
+    );
+  };
+
+  return getEngagement(b) - getEngagement(a);
+})[0];
+  const bestRound = getPostRound(bestPost);
 
   profileBox.innerHTML = `
     <div class="profile-heading">
@@ -1042,7 +1151,16 @@ function searchProfile() {
         <p>Reactions</p>
       </div>
     </div>
+<div class="profile-level-card">
+  <div>
+    <span>Current Fame Level</span>
+    <h3>${bestRound.title}</h3>
+  </div>
 
+  <div class="profile-level-number">
+    LEVEL ${bestRound.round}
+  </div>
+</div>
     <div class="best-post">
       <h3>🏆 Best Post</h3>
       <p><b>${bestPost.category}</b></p>
@@ -1191,32 +1309,6 @@ function searchProfile() {
 
 checkLogin();
 function renderBattle() {
-  let savedBattle = JSON.parse(localStorage.getItem("currentBattle"));
-
-let postA;
-let postB;
-
-if (savedBattle) {
-  postA = posts.find(p => p.firebaseId === savedBattle.postA);
-  postB = posts.find(p => p.firebaseId === savedBattle.postB);
-}
-
-if (!postA || !postB) {
-  const shuffledPosts = [...posts].sort(() => Math.random() - 0.5);
-
-  postA = shuffledPosts[0];
-  postB = shuffledPosts[1];
-
-  localStorage.setItem(
-    "currentBattle",
-    JSON.stringify({
-      postA: postA.firebaseId,
-      postB: postB.firebaseId
-    })
-  );
-
-  localStorage.removeItem("fame24BattleVote");
-}
   const battlePage = document.getElementById("battlePage");
 
   if (!battlePage) return;
@@ -1229,25 +1321,78 @@ if (!postA || !postB) {
         <span>At least 2 posts are needed.</span>
       </div>
     `;
+
     return;
+  }
+
+  let savedBattle = JSON.parse(
+    localStorage.getItem("currentBattle")
+  );
+
+  let postA;
+  let postB;
+
+  if (savedBattle) {
+    postA = posts.find(
+      post => post.firebaseId === savedBattle.postA
+    );
+
+    postB = posts.find(
+      post => post.firebaseId === savedBattle.postB
+    );
+  }
+
+  if (!postA || !postB) {
+    const shuffledPosts = [...posts].sort(
+      () => Math.random() - 0.5
+    );
+
+    postA = shuffledPosts[0];
+    postB = shuffledPosts[1];
+
+    localStorage.setItem(
+      "currentBattle",
+      JSON.stringify({
+        postA: postA.firebaseId,
+        postB: postB.firebaseId
+      })
+    );
+
+    localStorage.removeItem("fame24BattleVote");
   }
 
   battlePage.innerHTML = `
     <div class="battle-header">
       <p>🔥 Blind Fame Battle</p>
+
       <h2>Who deserves the spotlight?</h2>
-      <span>Names and vote counts are hidden.</span>
+
+      <span>
+        Vote without seeing names or follower counts.
+      </span>
     </div>
 
     <div class="battle-box">
 
       <div class="battle-post">
-        <div class="battle-tag">POST A</div>
+        <div class="battle-tag">
+          POST A
+        </div>
 
-        <img
-          src="${postA.image || 'https://via.placeholder.com/400'}"
-          alt="Battle Post A"
-        />
+        ${
+          postA.image
+            ? `
+              <img
+                src="${postA.image}"
+                alt="Battle Post A"
+              />
+            `
+            : `
+              <div class="battle-text-only">
+                ${postA.caption}
+              </div>
+            `
+        }
 
         <button
           class="battle-vote-btn"
@@ -1257,15 +1402,31 @@ if (!postA || !postB) {
         </button>
       </div>
 
-      <div class="vs-circle">VS</div>
+
+      <div class="vs-circle">
+        VS
+      </div>
+
 
       <div class="battle-post">
-        <div class="battle-tag">POST B</div>
+        <div class="battle-tag">
+          POST B
+        </div>
 
-        <img
-          src="${postB.image || 'https://via.placeholder.com/400'}"
-          alt="Battle Post B"
-        />
+        ${
+          postB.image
+            ? `
+              <img
+                src="${postB.image}"
+                alt="Battle Post B"
+              />
+            `
+            : `
+              <div class="battle-text-only">
+                ${postB.caption}
+              </div>
+            `
+        }
 
         <button
           class="battle-vote-btn"
@@ -1280,22 +1441,32 @@ if (!postA || !postB) {
     <div class="battle-timer">
       ⏳ Blind voting is live
     </div>
-    <button class="result-btn" onclick="showBattleResult()">
-  👑 Reveal Winner
-</button>
 
-<div id="battleResult" class="battle-result"></div>
+    <button
+      class="result-btn"
+      onclick="showBattleResult()"
+    >
+      👑 Reveal Winner
+    </button>
 
-<button class="new-battle-btn" onclick="startNewBattle()">
-  ⚔️ Next Battle
-</button>
+    <div
+      id="battleResult"
+      class="battle-result"
+    ></div>
+
+    <button
+      class="new-battle-btn"
+      onclick="startNewBattle()"
+    >
+      ⚔️ Next Battle
+    </button>
   `;
 }
 function startNewBattle() {
   localStorage.removeItem("currentBattle");
   localStorage.removeItem("fame24BattleVote");
 
-  //renderBattle();
+  renderBattle();
 
 
 }
@@ -1322,13 +1493,29 @@ function battleVote(firebaseId, side) {
     });
 }
 function showBattleResult() {
-  if (posts.length < 2) {
-    alert("Result ke liye kam se kam 2 posts chahiye.");
+  const savedBattle = JSON.parse(
+    localStorage.getItem("currentBattle")
+  );
+
+  if (!savedBattle) {
+    alert("Battle data nahi mila.");
+
     return;
   }
 
-  const postA = posts[0];
-  const postB = posts[1];
+  const postA = posts.find(
+    post => post.firebaseId === savedBattle.postA
+  );
+
+  const postB = posts.find(
+    post => post.firebaseId === savedBattle.postB
+  );
+
+  if (!postA || !postB) {
+    alert("Battle posts nahi mile.");
+
+    return;
+  }
 
   const votesA = postA.votes || 0;
   const votesB = postB.votes || 0;
@@ -1339,7 +1526,7 @@ function showBattleResult() {
     winnerText = `
       🏆 POST A WINS!
       <br>
-      Winner: ${postA.name}
+      Winner: @${postA.name}
       <br>
       ${votesA} votes
     `;
@@ -1347,7 +1534,7 @@ function showBattleResult() {
     winnerText = `
       🏆 POST B WINS!
       <br>
-      Winner: ${postB.name}
+      Winner: @${postB.name}
       <br>
       ${votesB} votes
     `;
@@ -1359,7 +1546,12 @@ function showBattleResult() {
     `;
   }
 
-  document.getElementById("battleResult").innerHTML = winnerText;
+  const resultBox =
+    document.getElementById("battleResult");
+
+  if (resultBox) {
+    resultBox.innerHTML = winnerText;
+  }
 }
 function renderSpotlightWinner() {
   const spotlightBox = document.getElementById("spotlightBox");
@@ -1403,3 +1595,61 @@ function renderSpotlightWinner() {
     </div>
   `;
 }
+function startChallengeTimer() {
+  const timerElement = document.getElementById("challengeTimer");
+
+  if (!timerElement) return;
+
+  // 24 hours from first load
+  let challengeEnd = localStorage.getItem("fame24ChallengeEnd");
+
+  if (!challengeEnd) {
+    challengeEnd = Date.now() + 24 * 60 * 60 * 1000;
+
+    localStorage.setItem(
+      "fame24ChallengeEnd",
+      challengeEnd
+    );
+  }
+
+  function updateTimer() {
+    const now = Date.now();
+    const distance = Number(challengeEnd) - now;
+
+    if (distance <= 0) {
+      timerElement.textContent = "🔥 Challenge ended";
+
+      localStorage.removeItem("fame24ChallengeEnd");
+
+      clearInterval(timerInterval);
+
+      return;
+    }
+
+    const hours = Math.floor(
+      distance / (1000 * 60 * 60)
+    );
+
+    const minutes = Math.floor(
+      (distance % (1000 * 60 * 60)) /
+      (1000 * 60)
+    );
+
+    const seconds = Math.floor(
+      (distance % (1000 * 60)) / 1000
+    );
+
+    timerElement.textContent =
+      `⏳ ${hours}h ${minutes}m ${seconds}s left`;
+  }
+
+  updateTimer();
+
+  const timerInterval =
+    setInterval(updateTimer, 1000);
+}
+
+document.addEventListener(
+  "DOMContentLoaded",
+  startChallengeTimer
+);
