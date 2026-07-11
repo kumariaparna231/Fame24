@@ -253,14 +253,19 @@ postBtn.innerText = "Posting...";
     showPage("feed");
   })
   .catch(error => {
-    console.error("Post save error:", error);
+  console.error("Post save error:", error);
 
-    postBtn.disabled = false;
-    postBtn.innerText = "Post Now";
+  postBtn.disabled = false;
+  postBtn.innerText = "Post Now";
 
-    alert("Post Firebase me save nahi hua.");
-  });
-}
+  alert(
+    "Firebase Error:\n" +
+    (error.code || "unknown") +
+    "\n" +
+    error.message
+  );
+});
+  }
 
   if (imageFile) {
     const reader = new FileReader();
