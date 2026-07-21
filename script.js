@@ -1,7 +1,8 @@
 let posts = [];
 let unsubscribePosts = null;
 let currentFilter = "All";
-let currentUser = localStorage.getItem("fame24User") || "";
+let currentUser = "";
+let currentUserId = "";
 let activeContributionPostId = null;
 let spotlightPasses = [];
 function loadSpotlightPasses() {
@@ -46,52 +47,187 @@ function loadPostsFromFirebase() {
       alert("Firebase se posts load nahi ho rahe.");
     });
 }
-function checkLogin() {
-  if (currentUser) {
-    document.getElementById("loginPage").classList.add("hidden");
-    document.getElementById("bottomNav").classList.remove("hidden");
-    document.getElementById("userBar").classList.remove("hidden");
-    document.getElementById("loggedUserText").innerText = "@" + currentUser;
-    loadPostsFromFirebase();
-    loadSpotlightPasses();
-    showPage("home");
-  } else {
-    document.getElementById("loginPage").classList.remove("hidden");
-    document.getElementById("homePage").classList.add("hidden");
-    document.getElementById("createPage").classList.add("hidden");
-    document.getElementById("feedPage").classList.add("hidden");
-    document.getElementById("profilePage").classList.add("hidden");
-    document.getElementById("bottomNav").classList.add("hidden");
-    document.getElementById("userBar").classList.add("hidden");
-  }
+function cleanUsername(username) {
+  return username
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "");
 }
 
-function loginUser() {
-  const username = document.getElementById("loginNameInput").value.trim();
+function isValidUsername(username) {
+  return /^[a-z0-9_]{3,20}$/.test(username);
+}
 
-  if (!username) {
-    alert("Username enter karo.");
+function usernameToEmail(username) {
+  return `${username}@fame24.app`;
+}
+
+async function signupUser() {
+  const usernameInput = document.getElementById("loginNameInput");
+  const passwordInput = document.getElementById("loginPasswordInput");
+  const errorBox = document.getElementById("loginError");
+
+  const username = cleanUsername(usernameInput.value);
+  const password = passwordInput.value;
+
+  errorBox.textContent = "";
+
+  if (!isValidUsername(username)) {
+    errorBox.textContent =
+      "ID me 3-20 letters, numbers ya underscore use karo.";
     return;
   }
 
-  currentUser = username;
-  localStorage.setItem("fame24User", currentUser);
+  if (password.length < 6) {
+    errorBox.textContent =
+      "Password kam se kam 6 characters ka hona chahiye.";
+    return;
+  }
 
-  checkLogin();
+  try {
+    const result = await auth.createUserWithEmailAndPassword(
+      usernameToEmail(username),
+      password
+    );
+
+    await result.user.updateProfile({
+      displayName: username
+    });
+
+    await db.collection("users").doc(result.user.uid).set({
+      uid: result.user.uid,
+      username: username,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    alert("✅ Fame24 account ban gaya!");
+
+  } catch (error) {
+    console.error(error);
+
+    if (error.code === "auth/email-already-in-use") {
+      errorBox.textContent = "Ye Fame24 ID pehle se registered hai.";
+    } else if (error.code === "auth/operation-not-allowed") {
+      errorBox.textContent =
+        "Firebase Console me Email/Password login enable karo.";
+    } else {
+      errorBox.textContent =
+        error.message || "Account create nahi hua.";
+    }
+  }
 }
 
-function logoutUser() {
+async function loginUser() {
+  const usernameInput = document.getElementById("loginNameInput");
+  const passwordInput = document.getElementById("loginPasswordInput");
+  const errorBox = document.getElementById("loginError");
+
+  const username = cleanUsername(usernameInput.value);
+  const password = passwordInput.value;
+
+  errorBox.textContent = "";
+
+  if (!username || !password) {
+    errorBox.textContent =
+      "Fame24 ID aur password dono enter karo.";
+    return;
+  }
+
+  try {
+    await auth.signInWithEmailAndPassword(
+      usernameToEmail(username),
+      password
+    );
+
+  } catch (error) {
+    console.error(error);
+    errorBox.textContent =
+      "Fame24 ID ya password galat hai.";
+  }
+}
+
+async function logoutUser() {
   const confirmLogout = confirm("Logout karna hai?");
 
   if (!confirmLogout) {
     return;
   }
 
-  currentUser = "";
-  localStorage.removeItem("fame24User");
-
-  checkLogin();
+  await auth.signOut();
 }
+
+function togglePassword() {
+  const input = document.getElementById("loginPasswordInput");
+  const button = document.getElementById("showPasswordBtn");
+
+  if (input.type === "password") {
+    input.type = "text";
+
+    if (button) {
+      button.textContent = "🙈 Hide Password";
+    }
+  } else {
+    input.type = "password";
+
+    if (button) {
+      button.textContent = "👁 Show Password";
+    }
+  }
+}
+
+auth.onAuthStateChanged(async function(user) {
+  const loginPage = document.getElementById("loginPage");
+  const bottomNav = document.getElementById("bottomNav");
+  const userBar = document.getElementById("userBar");
+  const loggedUserText =
+    document.getElementById("loggedUserText");
+
+  if (user) {
+    let username = user.displayName;
+
+    if (!username) {
+      const userDoc = await db
+        .collection("users")
+        .doc(user.uid)
+        .get();
+
+      if (userDoc.exists) {
+        username = userDoc.data().username;
+      }
+    }
+
+    currentUser =
+      username || user.email.split("@")[0];
+
+    currentUserId = user.uid;
+
+    loginPage.classList.add("hidden");
+    bottomNav.classList.remove("hidden");
+    userBar.classList.remove("hidden");
+
+    loggedUserText.textContent = `@${currentUser}`;
+
+    loadPostsFromFirebase();
+    loadSpotlightPasses();
+    showPage("home");
+
+  } else {
+    currentUser = "";
+    currentUserId = "";
+
+    loginPage.classList.remove("hidden");
+    bottomNav.classList.add("hidden");
+    userBar.classList.add("hidden");
+
+    document
+      .querySelectorAll("main section")
+      .forEach(section => {
+        if (section.id !== "loginPage") {
+          section.classList.add("hidden");
+        }
+      });
+  }
+});
 
 function showPage(page) {
   const pages = [
@@ -203,12 +339,12 @@ function filterPosts(category, button) {
   renderFeed();
 }
 function createPost() {
-  const name = currentUser;
+  const loggedUser = auth.currentUser;
   const category = document.getElementById("categoryInput").value;
   const caption = document.getElementById("captionInput").value.trim();
   const imageFile = document.getElementById("imageInput").files[0];
 
-  if (!currentUser) {
+  if (!loggedUser || !currentUser) {
     alert("Pehle login karo.");
     return;
   }
@@ -217,17 +353,19 @@ function createPost() {
     alert("Category aur post text fill karo.");
     return;
   }
-  const postBtn = document.getElementById("postBtn");
 
-postBtn.disabled = true;
-postBtn.innerText = "Posting...";
+  const postBtn = document.getElementById("postBtn");
+  postBtn.disabled = true;
+  postBtn.innerText = "Posting...";
+
   function saveNewPost(imageData) {
     const newPost = {
       id: Date.now(),
-      name: name,
+      userId: loggedUser.uid,
+      name: currentUser,
       category: category,
       caption: caption,
-      image: imageData,
+      image: imageData || "",
       votes: 0,
       comments: [],
       contributions: [],
@@ -237,34 +375,24 @@ postBtn.innerText = "Posting...";
         love: 0,
         relatable: 0
       },
-      createdAt: new Date().toLocaleString()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     db.collection("posts")
-  .add(newPost)
-  .then(() => {
-    clearForm();
-
-    postBtn.disabled = false;
-    postBtn.innerText = "Post Now";
-
-    alert("✅ Post successfully published!");
-
-    showPage("feed");
-  })
-  .catch(error => {
-  console.error("Post save error:", error);
-
-  postBtn.disabled = false;
-  postBtn.innerText = "Post Now";
-
-  alert(
-    "Firebase Error:\n" +
-    (error.code || "unknown") +
-    "\n" +
-    error.message
-  );
-});
+      .add(newPost)
+      .then(() => {
+        clearForm();
+        postBtn.disabled = false;
+        postBtn.innerText = "Post Now";
+        alert("✅ Post successfully published!");
+        showPage("feed");
+      })
+      .catch(error => {
+        console.error("Post save error:", error);
+        postBtn.disabled = false;
+        postBtn.innerText = "Post Now";
+        alert("Post upload nahi hui: " + error.message);
+      });
   }
 
   if (imageFile) {
@@ -274,12 +402,18 @@ postBtn.innerText = "Posting...";
       saveNewPost(event.target.result);
     };
 
+    reader.onerror = function() {
+      postBtn.disabled = false;
+      postBtn.innerText = "Post Now";
+      alert("Photo read nahi hui.");
+    };
+
     reader.readAsDataURL(imageFile);
   } else {
     saveNewPost("");
   }
 }
-    
+
 function clearForm() {
   document.getElementById("categoryInput").value = "";
   document.getElementById("captionInput").value = "";
@@ -1312,7 +1446,6 @@ function searchProfile() {
 
 }
 
-checkLogin();
 function renderBattle() {
   const battlePage = document.getElementById("battlePage");
 

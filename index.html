@@ -22,11 +22,42 @@
     <section id="loginPage">
   <div class="card login-card">
     <h3>Login to Fame24</h3>
-    <p class="login-text">Enter your username to start posting, voting and commenting.</p>
 
-    <input id="loginNameInput" type="text" placeholder="Choose username e.g. aparna" />
+    <p class="login-text">
+      Apni Fame24 ID aur password enter karo.
+    </p>
 
-    <button class="primary-btn" onclick="loginUser()">Login</button>
+    <input
+      id="loginNameInput"
+      type="text"
+      placeholder="Fame24 ID e.g. aparna24"
+      autocomplete="username"
+    />
+
+    <input
+      id="loginPasswordInput"
+      type="password"
+      placeholder="Password"
+      autocomplete="current-password"
+    />
+
+    <p id="loginError" class="login-error"></p>
+
+    <button class="primary-btn" onclick="loginUser()">
+      Login
+    </button>
+
+    <button class="secondary-btn" onclick="signupUser()">
+      Create New Account
+    </button>
+
+    <button class="forgot-btn" onclick="togglePassword()">
+      👁 Show Password
+    </button>
+
+    <p class="small-note">
+      New user ho to “Create New Account” par click karo.
+    </p>
   </div>
 </section>
 <section id="homePage" class="hidden">
@@ -234,6 +265,7 @@
 </div>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
 <script src="firebase-config.js?v=2"></script>
 <script src="script.js?v=3"></script>
